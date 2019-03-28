@@ -6,6 +6,9 @@
 # TODO (NICK) - Need to write error handle: if equity class does not exist 
 # TODO (Nick & Charlie ) - modularize the code 
 # TODO (NIck) - clean data types so sql numeric values work 
+# TODO (Nick & Charlie ) - right now the code stops running if there is a 
+# duplicate. 
+
 
 # libraries (data cleaning)
 library(stringr)
@@ -338,5 +341,6 @@ while (again == TRUE) {
       break
     }
   }
+}
 
 
