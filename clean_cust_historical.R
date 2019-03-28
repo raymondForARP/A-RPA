@@ -5,6 +5,7 @@
 
 # TODO (NICK) - Need to write error handle: if equity class does not exist 
 # TODO (Nick & Charlie ) - modularize the code 
+# TODO (NIck) - clean data types so sql numeric values work 
 
 # libraries (data cleaning)
 library(stringr)
@@ -25,7 +26,7 @@ while (again == TRUE) {
   if (length(temp) != 0 ){
     # import all csv's 
     myfiles <- lapply(temp, read.delim, 
-                    header = FALSE, sep = ',', stringsAsFactors = FALSE)
+                      header = FALSE, sep = ',', stringsAsFactors = FALSE)
     current.date <- myfiles[[1]]$V1[4]
     dates <- c(dates, current.date)
   }
@@ -167,7 +168,7 @@ while (again == TRUE) {
     rm(ordinary, extra, myfiles, overnight, summary, count, deposit, forwards,
        futures, i, i.margin, options, perf, sgmnt, 
        data.df, equity, x)
-
+    
     # add asset class name to df 
     extra.master <- cbind("extra", extra.master)
     ordinary.master <- cbind("ordinary", ordinary.master)
@@ -212,26 +213,15 @@ while (again == TRUE) {
     colnames(overnight.master)[1:4] <- new_col
     
     # make column names unique 
-    extra.colnames <- make.names(colnames(extra.master),unique = T)
-    ordinary.colnames <- make.names(colnames(ordinary.master), unique = T)
-    equity.colnames <- make.names(colnames(equity.master), unique = T)
-    deposit.colnames <- make.names(colnames(deposit.master), unique = T)
-    options.colnames <- make.names(colnames(options.master), unique = T)
-    futures.colnames <- make.names(colnames(futures.master), unique = T)
-    i.margin.colnames <- make.names(colnames(i.margin.master), unique = T)
-    forwards.colnames <- make.names(colnames(forwards.master), unique = T)
-    overnight.colnames <- make.names(colnames(overnight.master), unique = T)
-    
-    # Final Column names 
-    colnames(extra.master) <-  extra.colnames
-    colnames(ordinary.master) <- ordinary.colnames
-    colnames(equity.master) <- equity.colnames
-    colnames(deposit.master) <- deposit.colnames
-    colnames(options.master) <- options.colnames
-    colnames(futures.master) <- futures.colnames
-    colnames(i.margin.master) <- i.margin.colnames
-    colnames(forwards.master) <- forwards.colnames
-    colnames(overnight.master) <- overnight.colnames
+    colnames(extra.master) <- make.names(colnames(extra.master),unique = T)
+    colnames(ordinary.master) <- make.names(colnames(ordinary.master), unique = T)
+    colnames(equity.master) <- make.names(colnames(equity.master), unique = T)
+    colnames(deposit.master) <- make.names(colnames(deposit.master), unique = T)
+    colnames(options.master) <- make.names(colnames(options.master), unique = T)
+    colnames(futures.master) <- make.names(colnames(futures.master), unique = T)
+    colnames(i.margin.master) <- make.names(colnames(i.margin.master), unique = T)
+    colnames(forwards.master) <- make.names(colnames(forwards.master), unique = T)
+    colnames(overnight.master) <- make.names(colnames(overnight.master), unique = T)
     
     # remove unncessary rows in the data frame 
     extra.master <- filter(extra.master, ISIN != "ISIN")
@@ -301,6 +291,10 @@ while (again == TRUE) {
     colnames(forwards.master) <- tolower(gsub("\\.", "_", colnames(forwards.master)))
     colnames(overnight.master) <- tolower(gsub("\\.", "_", colnames(overnight.master)))
     
+    # clean data types 
+    
+    
+    
     # Write to MySQL
     rmariadb.settingsfile <-"/Users/ndflip7/desktop/arpa.cnf"
     rmariadb.db <- 'arpa'
@@ -308,20 +302,18 @@ while (again == TRUE) {
                     default.file=rmariadb.settingsfile, 
                     group=rmariadb.db )
     # all numeric int variables should not have commas 
-    equity.master <- as.data.frame(sapply(equity.master, # need to fix 
-                                          gsub, 
-                                          pattern = ",", 
-                                          replacement= ""))
-    ## S4 method for signature 'MariaDBConnection,character,data.frame'
+    # equity.master <- as.data.frame(sapply(equity.master, # need to fix 
+    #                                       gsub, 
+    #                                       pattern = ",", 
+    #                                       replacement= ""))
     dbWriteTable(db, 'equity', equity.master, row.names = FALSE, append = TRUE)
-    
-    # dbWriteTable(conn=db, name="ordinary", ordinary.master, append = T, row.names = F)
-    # dbWriteTable(conn=db, name="extra", extra.master, append = T, row.names = F)
-    # dbWriteTable(conn=db, name="forwards", forwards.master, append = T, row.names = F)
-    # dbWriteTable(conn=db, name="futures", futures.master, append = T, row.names = F)
-    # dbWriteTable(conn=db, name="imargin", i.margin.master, append = T, row.names = F)
-    # dbWriteTable(conn=db, name="options", options.master, append = T, row.names = F)
-    # dbWriteTable(conn=db, name="overnight", overnight.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="ordinary", ordinary.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="extra", extra.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="forwards", forwards.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="futures", futures.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="imargin", i.margin.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="options", options.master, append = T, row.names = F)
+    dbWriteTable(conn=db, name="overnight", overnight.master, append = T, row.names = F)
     dbDisconnect(db)
     
     # clear variables 
@@ -330,7 +322,7 @@ while (again == TRUE) {
        equity.master, ordinary.colnames , deposit.colnames , options.colnames , futures.colnames ,
        i.margin.colnames , forwards.colnames , overnight.colnames , extra.colnames ,
        equity.colnames, new_col, short.loc)
-
+    
     
     Sys.sleep(10) # sleep time, need to optimize so parrallel code works 
     temp <- list.files(pattern = "*.csv") 
@@ -347,4 +339,3 @@ while (again == TRUE) {
     }
   }
 }
-  
