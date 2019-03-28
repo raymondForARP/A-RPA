@@ -23,14 +23,15 @@ dates <- c()
 while (again == TRUE) { 
   # read in files
   temp <- list.files(pattern = "*.csv")
-  if (length(temp) != 0 ){
+  if (length(temp) == 0 ){
+    again <- FALSE
+  } else {
     # import all csv's 
     myfiles <- lapply(temp, read.delim, 
                       header = FALSE, sep = ',', stringsAsFactors = FALSE)
     current.date <- myfiles[[1]]$V1[4]
     dates <- c(dates, current.date)
   }
-  
   while (length(temp) != 0) {
     # define globabl variables 
     ordinary.master <- deposit.master <- options.master <- futures.master <-
@@ -314,7 +315,7 @@ while (again == TRUE) {
     dbWriteTable(conn=db, name="imargin", i.margin.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="options", options.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="overnight", overnight.master, append = T, row.names = F)
-    
+    dbDisconnect(db)
     
     # clear variables 
     rm(ordinary.master , deposit.master , options.master , futures.master ,
@@ -325,6 +326,7 @@ while (again == TRUE) {
     Sys.sleep(1) # sleep time, need to optimize so parrallel code works 
     temp <- list.files(pattern = "*.csv") 
     if (length(temp) == 0) {
+      again <- FALSE
       break
     } # else read in the file 
     
@@ -333,10 +335,8 @@ while (again == TRUE) {
     current.date <- myfiles[[1]]$V1[4]
     if (current.date %in% dates){
       again <- FALSE
-      break 
+      break
     }
   }
-}
-# disconnect database 
-dbDisconnect(db)
+
 
