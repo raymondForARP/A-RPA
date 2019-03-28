@@ -314,17 +314,15 @@ while (again == TRUE) {
     dbWriteTable(conn=db, name="imargin", i.margin.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="options", options.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="overnight", overnight.master, append = T, row.names = F)
-    dbDisconnect(db)
+    
     
     # clear variables 
     rm(ordinary.master , deposit.master , options.master , futures.master ,
        i.margin.master , forwards.master , overnight.master , extra.master ,
-       equity.master, ordinary.colnames , deposit.colnames , options.colnames , futures.colnames ,
-       i.margin.colnames , forwards.colnames , overnight.colnames , extra.colnames ,
-       equity.colnames, new_col, short.loc)
+       equity.master,  new_col, short.loc)
     
     
-    Sys.sleep(10) # sleep time, need to optimize so parrallel code works 
+    Sys.sleep(1) # sleep time, need to optimize so parrallel code works 
     temp <- list.files(pattern = "*.csv") 
     if (length(temp) == 0) {
       break
@@ -335,7 +333,10 @@ while (again == TRUE) {
     current.date <- myfiles[[1]]$V1[4]
     if (current.date %in% dates){
       again <- FALSE
-      break
+      break 
     }
   }
 }
+# disconnect database 
+dbDisconnect(db)
+
