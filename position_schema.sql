@@ -152,4 +152,18 @@ CREATE TABLE overnight (
 	counterparty VARCHAR(50),
 	x__in_portfolio TEXT
 );
+CREATE TABLE deposit ( 
+	deposit_id INTEGER PRIMARY KEY AUTO_INCREMENT,
+	asset_class VARCHAR(50),
+	date_id TEXT,
+	segment VARCHAR(50),
+	currency VARCHAR(50),
+	nominal_value TEXT,
+	book_price TEXT,
+	pirce TEXT,
+	book_value_eur TEXT,
+	market_value_eur TEXT,
+	receivable__liability_eur TEXT,
+	x__in_portfolio TEXT
+)
                   
