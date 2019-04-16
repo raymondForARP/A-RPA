@@ -3,6 +3,12 @@
 -- datatypes need to be tweaked. Not every string needs to be a VARCHAR(50). 
 
 -- create schema for all  asset classes
+
+CREATE TABLE isin (
+	ID VARCHAR(20) PRIMARY KEY,
+	region VARCHAR(25),
+	asset_type VARCHAR(25),
+);
 CREATE TABLE equity (
 	equity_id INTEGER PRIMARY KEY AUTO_INCREMENT,
 	asset_class VARCHAR(50),
@@ -160,7 +166,7 @@ CREATE TABLE deposit (
 	currency VARCHAR(50),
 	nominal_value TEXT,
 	book_price TEXT,
-	pirce TEXT,
+	price TEXT,
 	book_value_eur TEXT,
 	market_value_eur TEXT,
 	receivable__liability_eur TEXT,
