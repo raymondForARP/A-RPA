@@ -19,23 +19,82 @@ library(lubridate)
 library(DBI)
 library(RMariaDB)
 
+
+
+
+myData <-read.csv(file='/Users/charlesraymond/A-RPA/Mydata/MyData.csv', header=TRUE, sep=",")
+print(myData[['input.ticker']][2])
+
+checkIsin <- function(table, myData){
+  
+  for(i in 1:nrow(table)){
+    isinName <- paste(table[['isin']][i], "EQUITY")#, sep = "")
+    for(k in 1:nrow(myData)){
+      dataName <- myData[['input.ticker']][i]
+      #print(isinName)
+      #print(dataName)
+    
+      #print("HI")
+      if(isinName == dataName)
+      {
+        print("A MATCH !!!! good!")
+        
+      }
+    
+    #if(dataName == 'IE00B3DKXQ41 EQUITY')
+    #{
+    #  print("WHOOOO")
+    #}
+    }
+  }
+}
+
+#checkIsin(myData)
+
+
 # controls for while loop 
 again <- TRUE 
-dates <- c()
+dates <- c("HI")
+
 
 while (again == TRUE) { 
+  perform <- TRUE
+  
   # read in files
-  temp <- list.files(pattern = "*.csv")
+  temp <- list.files(path = "/Users/charlesraymond/A-RPA/", pattern = "*.csv")
+  print(temp)
+  
   if (length(temp) == 0 ){
-    again <- FALSE
+    again <- TRUE
+    print("temp is empty!")
   } else {
-    # import all csv's 
+    setwd('/Users/charlesraymond/A-RPA/')
+    #import all csv's 
+    ##for some reason we are failing here...
     myfiles <- lapply(temp, read.delim, 
-                      header = FALSE, sep = ',', stringsAsFactors = FALSE)
+                      header = FALSE, sep = ',', stringsAsFactors = FALSE)#, the_dir="/Users/charlesraymond/A-RPA/")
+    #myfiles <- lapply(temp, function(i){
+                #read.csv(i, header=FALSE, sep = ',', stringsAsFactors = FALSE)
+    
     current.date <- myfiles[[1]]$V1[4]
-    dates <- c(dates, current.date)
+    print(current.date)
   }
-  while (length(temp) != 0) {
+  
+  if(length(dates)!=0){
+    
+    for(theDate in dates){
+      print(theDate)
+      
+      if(theDate == current.date){
+        print("Perform = FALSE")
+        perform <- FALSE
+      }
+      
+    }
+  }
+  
+  while (perform == TRUE) {
+    #print("temp is no longer empty!")
     # define globabl variables 
     ordinary.master <- deposit.master <- options.master <- futures.master <-
       i.margin.master <- forwards.master <- overnight.master <- extra.master <-
@@ -67,6 +126,7 @@ while (again == TRUE) {
         }
         block.num[[x]] <- count 
       }
+
       # add block num to df 
       data.df <- cbind(block.num, data.df)
       data.df <- filter(data.df, block.num != 0) # remove blk 0 
@@ -86,6 +146,7 @@ while (again == TRUE) {
           return(NULL)
         }
       }
+
       
       # identify what block the asset is in, and create new data frame 
       # remove block from original data.df 
@@ -134,7 +195,7 @@ while (again == TRUE) {
       data.df <- filter(data.df, block.num != 0)
       extra <- data.df 
       
-      
+
       # create master list, which will be appended throughout the for loop 
       master <- function(df, m.df, count) {
         if (length(m.df) > 0) {
@@ -154,6 +215,7 @@ while (again == TRUE) {
         }
       }
       
+      
       extra.master     <- master(extra,     extra.master,        i)
       equity.master    <- master(equity,    equity.master,       i)
       deposit.master   <- master(deposit,   deposit.master,      i)
@@ -167,22 +229,36 @@ while (again == TRUE) {
       # TODO(nick) : Need to break up equity into 2 data frames, ordinary shares 
       # and other 
     }
+   # print("WE GET HERE 2")
     
     # remove unused data 
     rm(ordinary, extra, myfiles, overnight, summary, count, deposit, forwards,
        futures, i, i.margin, options, perf, sgmnt, 
        data.df, equity, x)
     
+   # print("WE GET HERE 3")
+
     # add asset class name to df 
     extra.master <- cbind("extra", extra.master)
+   # print("WE GET HERE 4")
+    
     ordinary.master <- cbind("ordinary", ordinary.master)
     equity.master <- cbind("equity", equity.master)
     deposit.master <- cbind("deposit and variation margin", deposit.master)
     options.master <- cbind("options", options.master)
     futures.master <- cbind("futures", futures.master)
     i.margin.master <- cbind("initial margin and summary cash", i.margin.master)
+    #print("WE GET HERE 4")
+    
     forwards.master  <- cbind('forwards',  forwards.master)
-    overnight.master <- cbind("overnight deposit", overnight.master)
+    #print("WE GET HERE 4")
+    
+    if (length (overnight.master) != 0 ){
+      overnight.master <- cbind("overnight deposit", overnight.master)
+    } 
+    #overnight.master <- cbind("overnight deposit", overnight.master)
+    
+    #print("WE GET HERE 5")
     
     # rename columns 
     colnames(ordinary.master) <- ordinary.master[1, ] 
@@ -201,8 +277,15 @@ while (again == TRUE) {
     i.margin.master <- i.margin.master[-1, ]
     colnames(forwards.master) <- forwards.master[2, ] 
     forwards.master <- forwards.master[c(-1,-2), ]
-    colnames(overnight.master) <- overnight.master[1, ] 
-    overnight.master <- overnight.master[-1, ]
+    #print("WE GET HERE 6")
+    
+    if (length (overnight.master) != 0 ){
+      colnames(overnight.master) <- overnight.master[1, ] 
+      overnight.master <- overnight.master[-1, ]
+    } 
+    #colnames(overnight.master) <- overnight.master[1, ] 
+    #overnight.master <- overnight.master[-1, ]
+    #print("WE GET HERE 6")
     
     # rename col #1 
     new_col <- c("asset_class", "block", "date_id", "segment")
@@ -214,7 +297,12 @@ while (again == TRUE) {
     colnames(futures.master)[1:4] <- new_col
     colnames(i.margin.master)[1:4] <- new_col
     colnames(forwards.master)[1:4] <- new_col
-    colnames(overnight.master)[1:4] <- new_col
+    
+    if (length (overnight.master) != 0 ){
+      colnames(overnight.master)[1:4] <- new_col
+    } 
+    #colnames(overnight.master)[1:4] <- new_col
+    #print("WE GET HERE 7")
     
     # make column names unique 
     colnames(extra.master) <- make.names(colnames(extra.master),unique = T)
@@ -239,6 +327,7 @@ while (again == TRUE) {
     i.margin.master <- filter(i.margin.master, Currency != "Currency")
     forwards.master <- filter(forwards.master, Maturity != "Maturity")
     overnight.master <- filter(overnight.master, Currency != "Currency")
+    #print("WE GET HERE 8")
     
     # add type & counter party to forwards 
     colnames(forwards.master)[5] <- "Type"
@@ -269,7 +358,7 @@ while (again == TRUE) {
         df <- select(df, -NA.)
       }
       new.df <- df[, which(!str_detect(string = colnames(df), 
-                                       pattern = "[0-9]"))]
+                                       pattern = "^X.[0-9]"))]
       # Delete block column 
       final <- select(new.df, -block)
       return(final)
@@ -282,7 +371,13 @@ while (again == TRUE) {
     ordinary.master  <- del_Xn(ordinary.master)
     i.margin.master  <- del_Xn(i.margin.master)
     forwards.master  <- del_Xn(forwards.master)
-    overnight.master <- del_Xn(overnight.master)
+    
+    if (length (overnight.master) != 0 ){
+      overnight.master <- del_Xn(overnight.master)
+    } 
+    #overnight.master <- del_Xn(overnight.master)
+    #print("WE GET HERE 9")
+    
     
     # Rename columns to fit SQL database 
     colnames(extra.master) <- tolower(gsub("\\.", "_", colnames(extra.master)))
@@ -295,12 +390,17 @@ while (again == TRUE) {
     colnames(forwards.master) <- tolower(gsub("\\.", "_", colnames(forwards.master)))
     colnames(overnight.master) <- tolower(gsub("\\.", "_", colnames(overnight.master)))
     
+    
+    
+    checkIsin(equity.master, myData)
     # clean data types 
     
-    
-    
     # Write to MySQL
-    rmariadb.settingsfile <-"/Users/ndflip7/desktop/arpa.cnf"
+     rmariadb.settingsfile <-"/Users/ndflip7/desktop/arpa.cnf"
+    # rmariadb.settingsfile <- "/Users/charlesraymond/Desktop/arpaConfig/arpa.cnf"
+    
+    print("WE GET HERE 9")
+    
     rmariadb.db <- 'arpa'
     db <- dbConnect(RMariaDB::MariaDB(), 
                     default.file=rmariadb.settingsfile, 
@@ -317,6 +417,9 @@ while (again == TRUE) {
     dbWriteTable(conn=db, name="futures", futures.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="imargin", i.margin.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="options", options.master, append = T, row.names = F)
+    #added this
+    print("fails here")
+    dbWriteTable(conn=db, name="deposit", deposit.master, append = T, row.names = F)
     dbWriteTable(conn=db, name="overnight", overnight.master, append = T, row.names = F)
     dbDisconnect(db)
     
@@ -325,8 +428,8 @@ while (again == TRUE) {
        i.margin.master , forwards.master , overnight.master , extra.master ,
        equity.master,  new_col, short.loc)
     
-    
-    Sys.sleep(1) # sleep time, need to optimize so parrallel code works 
+
+    #Sys.sleep(1) # sleep time, need to optimize so parrallel code works 
     temp <- list.files(pattern = "*.csv") 
     if (length(temp) == 0) {
       again <- FALSE
@@ -340,7 +443,38 @@ while (again == TRUE) {
       again <- FALSE
       break
     }
+    
+    print("It worked!")
+    perform <-FALSE
   }
+
+  print("WE GET HERE, time to sleep")
+  Sys.sleep(10) # sleep time, need to optimize so parrallel code works 
+  #dates <- c(dates, current.date)
+  #print("THE LIST OF DATES")
+  #print(dates)
+  
+  addDate <- TRUE
+  
+  if(length(dates)!=0){
+    
+    for(theDate in dates){
+      print(theDate)
+      
+      if(theDate == current.date){
+        print("addDate = FALSE")
+        addDate <- FALSE
+      }
+    }
+    
+    if(addDate != FALSE)
+    {
+      dates <- c(dates, current.date)
+      print("added Date!")
+    }
+  }
+
+  
 }
 
 
