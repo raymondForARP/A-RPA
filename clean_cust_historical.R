@@ -19,37 +19,128 @@ library(lubridate)
 library(DBI)
 library(RMariaDB)
 
-
+setwd('/Users/charlesraymond/A-RPA/')
 
 
 myData <-read.csv(file='/Users/charlesraymond/A-RPA/Mydata/MyData.csv', header=TRUE, sep=",")
-print(myData[['input.ticker']][2])
+#print(myData[['input.ticker']][2])
+tickerList<- myData[['input.ticker']]
+print(typeof(myData))
+#print("Ticker List")
+#print(tickerList)
+missingIsin <- c()
+#optionId <- c()
 
-checkIsin <- function(table, myData){
+##converte EU date to normal date
+findDate<- function(date){
   
-  for(i in 1:nrow(table)){
-    isinName <- paste(table[['isin']][i], "EQUITY")#, sep = "")
-    for(k in 1:nrow(myData)){
-      dataName <- myData[['input.ticker']][i]
-      #print(isinName)
-      #print(dataName)
+  theDate <- c()
+  
+  string <- str_split(date, '-')
+  #print(string)
+  year = string [[1]][1]
+  month = string[[1]][2]
+  day <- str_split(string[[1]][3], ' ')
+  day <- day[[1]][1]
+  #print(day)
+  
+  stringDate <- paste(month,day,year,sep='/')
+  #print(stringDate)
+  stringDate <- mdy(stringDate)
+
+  current <- stringDate
+  #print(current)
+  
+  currentDay <- day(current)
+  year <- year(current)
+  month <- month(current)
+
+  for(i in 1:7){
     
-      #print("HI")
-      if(isinName == dataName)
-      {
-        print("A MATCH !!!! good!")
-        
-      }
+    currentDate <- paste(toString(month), toString(currentDay), toString(year), sep='/')
+    #print(currentDate)
+    #theDate <- paste(month,day,year,sep='/')
+  
+    theDate <- append(theDate, currentDate)
     
-    #if(dataName == 'IE00B3DKXQ41 EQUITY')
-    #{
-    #  print("WHOOOO")
-    #}
-    }
+    currentDay <- currentDay - 1
+
   }
+  #print(theDate)
+  return(theDate)
 }
 
-#checkIsin(myData)
+findType <- function(type){
+  if(type == "Call")
+    return('C')
+  else if(type == "Put")
+    return('P')
+  else
+    return("NOPE")
+}
+
+##Come back to later, does first index twice (duplicate)
+uniqueOptionID <- function(table, tickerList){
+  match <- FALSE
+  tick <- ''
+  optionList <- c()
+  for(i in 1:nrow(table))
+  {
+    #print(table[['maturity']][i])
+    string <- table[['contract']][i]
+    if(str_detect(string, "OPT.A.ESTX 50", negate = FALSE)){
+      tick <- "sxe5"
+    }
+    #Make for s&p 500?
+    #if(str_detect(string, "OPT.A.ESTX 50", negate = FALSE)){
+      #tick <- "sxe5"
+    #}
+    
+    maturityDate <- findDate(table[['maturity']][i])
+    #print(maturityDate)
+    type <- findType(table[['type_1']][i])
+    type <- paste(type, table[['strike_price']][i], sep='')
+    
+    for(k in 1:7){
+      #print(maturityDate[[k]])
+      optionIndex <- paste(tick, maturityDate[[k]], type, 'Index', sep=' ')
+      #print(optionIndex)
+      optionList <- append(optionList, optionIndex)
+    }
+  }
+  return(optionList)
+}
+
+isinEquityAndOrdinary <- function(table, tickerList){
+  match <- FALSE
+ # missingIsin <- list()
+  
+  ##EACH isin gets compared to the whole list of Isins
+  ##when there is not a match(FALSE) we add it to a unique list
+  for(i in 1:nrow(table)){
+    
+    isinName <- paste(table[['isin']][i], "EQUITY")#, sep = "")
+    
+    for(ticker in tickerList){
+      
+      if(isinName == ticker)
+      {
+        #print(isinName)
+        match <- TRUE
+      }
+      else
+        match <- FALSE
+    }
+      
+    if(match == FALSE)
+    {
+      missingIsin <- append(missingIsin, isinName)
+    }
+  }
+  return(missingIsin)
+}
+
+
 
 
 # controls for while loop 
@@ -378,6 +469,9 @@ while (again == TRUE) {
     #overnight.master <- del_Xn(overnight.master)
     #print("WE GET HERE 9")
     
+    ###!!!!!!!!!
+    #SET FORWARD EXHCANGE TO 1
+    ###!!!!!!!!!
     
     # Rename columns to fit SQL database 
     colnames(extra.master) <- tolower(gsub("\\.", "_", colnames(extra.master)))
@@ -391,13 +485,22 @@ while (again == TRUE) {
     colnames(overnight.master) <- tolower(gsub("\\.", "_", colnames(overnight.master)))
     
     
+   # missingIsin <- isinEquityAndOrdinary(equity.master, tickerList)
+    #missingIsin <- isinEquityAndOrdinary(ordinary.master, tickerList)
+    optionId <- uniqueOptionID(options.master, tickerList)
+    data.frame(optionId)
     
-    checkIsin(equity.master, myData)
+    write.table(optionId, "Mydata/option.csv", row.names=FALSE, col.names=FALSE)
+    
+    print(optionId)
+    
+    #print(missingIsin)
+    #checkIsin(equity.master, myData)
     # clean data types 
     
     # Write to MySQL
      rmariadb.settingsfile <-"/Users/ndflip7/desktop/arpa.cnf"
-    # rmariadb.settingsfile <- "/Users/charlesraymond/Desktop/arpaConfig/arpa.cnf"
+     #rmariadb.settingsfile <- "/Users/charlesraymond/Desktop/arpaConfig/arpa.cnf"
     
     print("WE GET HERE 9")
     
