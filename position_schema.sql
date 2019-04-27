@@ -7,8 +7,9 @@
 CREATE TABLE isin (
 	ID VARCHAR(20) PRIMARY KEY,
 	region VARCHAR(25),
-	asset_type VARCHAR(25),
+	asset_type VARCHAR(25)
 );
+
 CREATE TABLE equity (
 	equity_id INTEGER PRIMARY KEY AUTO_INCREMENT,
 	asset_class VARCHAR(50),
@@ -22,6 +23,7 @@ CREATE TABLE equity (
 	book_price TEXT, 
 	exchange_rate TEXT, 
 	price TEXT, 
+	exchange_rate_1 TEXT, 
 	book_value_eur TEXT,
 	market_value_eur TEXT,
 	profit___loss_eur TEXT, 
@@ -73,6 +75,7 @@ CREATE TABLE futures (
 	qty_of_contracts TEXT, 
 	contract_size TEXT,
 	type VARCHAR(50), 
+	type_1 VARCHAR(50),
 	currency VARCHAR(50),
 	book_price TEXT,
 	price TEXT, 
@@ -81,7 +84,8 @@ CREATE TABLE futures (
 	market_value_eur TEXT,
 	receivable__liab__eur TEXT, 
 	x__in_portfolio TEXT,
-	counter_currency VARCHAR(50)
+	counter_currency VARCHAR(50),
+	exchange_rate_1 TEXT
 );
 CREATE TABLE imargin (
 	imargin_id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -109,11 +113,13 @@ CREATE TABLE options (
 	qty_of_contracts TEXT, 
 	contract_size TEXT,
 	type VARCHAR(50), 
+	type_1 VARCHAR(50),
 	currency VARCHAR(50),
 	strike_price TEXT,
 	book_price TEXT,
 	exchange_rate TEXT, 
 	price TEXT, 
+	exchange_rate_1 TEXT, 
 	book_value_eur_ TEXT,
 	market_value_eur__ TEXT,
 	receivable__liab__eur TEXT, 
@@ -134,6 +140,7 @@ CREATE TABLE ordinary (
 	book_price TEXT, 
 	exchange_rate TEXT, 
 	price TEXT, 
+	exchange_rate_1 TEXT, 
 	book_value_eur TEXT,
 	market_value_eur TEXT,
 	profit___loss_eur TEXT, 
@@ -142,7 +149,8 @@ CREATE TABLE ordinary (
 	other_positions TEXT, 
 	collateral_positions TEXT, 
 	margin_positions TEXT, 
-	corp_actions_positions TEXT
+	corp_actions_positions TEXT,
+	other_positions_1 TEXT
 );
 CREATE TABLE overnight (
 	overnight_id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -154,6 +162,7 @@ CREATE TABLE overnight (
 	interest_rate_in__ TEXT, 
 	exchange_rate TEXT, 
 	book_value_eur TEXT,
+	exchange_rate_1 TEXT, 
 	market_value_eur TEXT,
 	counterparty VARCHAR(50),
 	x__in_portfolio TEXT
@@ -171,5 +180,5 @@ CREATE TABLE deposit (
 	market_value_eur TEXT,
 	receivable__liability_eur TEXT,
 	x__in_portfolio TEXT
-)
+);
                   
